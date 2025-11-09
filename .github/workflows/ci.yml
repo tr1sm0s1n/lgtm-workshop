@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check PR Title Format
         run: |
-          if ! echo "${{ github.event.pull_request.title }}" | grep -qE '^(feat|fix|docs|refactor|test|chore)\([a-z]+\): .+'; then
+          if ! echo "${{ github.event.pull_request.title }}" | grep -qE '^(feat|fix|docs|refactor|test|chore): .+'; then
             echo "❌ PR title must match: 'type: description'"
             echo "Example: 'feat: add string validator'"
             exit 1
