@@ -1,0 +1,99 @@
+name: Release Bot
+
+permissions:
+  contents: write
+  issues: write
+
+on:
+  push:
+    branches:
+      - 'rc/*'
+
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  rc-release:
+    name: RC Release
+    if: startsWith(github.ref_name, 'rc/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Extract version info
+        id: version
+        run: |
+          RC_BRANCH="${GITHUB_REF_NAME}" # e.g. rc/v1.0.0
+          BASE_VERSION="${RC_BRANCH#rc/}" # -> v1.0.0
+          TAG_PREFIX="${BASE_VERSION}.rc"
+
+          LAST_TAG=$(git tag --list "${TAG_PREFIX}-*" | sort -V | tail -n1 || true)
+          if [ -z "$LAST_TAG" ]; then
+            NEXT_RC=1
+          else
+            LAST_RC=${LAST_TAG##*-}
+            NEXT_RC=$((LAST_RC + 1))
+          fi
+
+          NEW_TAG="${TAG_PREFIX}-${NEXT_RC}"
+          echo "new_tag=${NEW_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Create RC release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: 'Release Candidate ${{ steps.version.outputs.new_tag }}'
+          body: 'Automated release candidate for ${{ github.ref_name }}'
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  stable-release:
+    name: Stable Release
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'rc/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Determine stable version
+        id: version
+        run: |
+          RC_BRANCH="${{ github.event.pull_request.head.ref }}" # e.g. rc/v1.0.0
+          STABLE_VERSION="${RC_BRANCH#rc/}"                      # -> v1.0.0
+          echo "stable_version=${STABLE_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create stable release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.stable_version }}
+          name: 'Release ${{ steps.version.outputs.stable_version }}'
+          body: 'Stable release promoted from branch ${{ github.event.pull_request.head.ref }}'
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Close milestone
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STABLE_VERSION="${{ steps.version.outputs.stable_version }}"
+          echo "Attempting to close milestone ${STABLE_VERSION}"
+
+          # Find milestone number by title
+          MILESTONE_NUMBER=$(gh api repos/${{ github.repository }}/milestones \
+            --jq ".[] | select(.title==\"${STABLE_VERSION}\") | .number")
+
+          if [ -z "$MILESTONE_NUMBER" ]; then
+            echo "No milestone found with title ${STABLE_VERSION}"
+          else
+            echo "Closing milestone #${MILESTONE_NUMBER}"
+            gh api repos/${{ github.repository }}/milestones/${MILESTONE_NUMBER} \
+              -X PATCH -f state=closed
+          fi

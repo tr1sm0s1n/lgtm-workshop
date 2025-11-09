@@ -1,0 +1,48 @@
+name: CI Pipeline
+
+on: [pull_request]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check PR Title Format
+        run: |
+          if ! echo "${{ github.event.pull_request.title }}" | grep -qE '^(feat|fix|docs|refactor|test|chore): .+'; then
+            echo "❌ PR title must match: 'type: description'"
+            echo "Example: 'feat: add string validator'"
+            exit 1
+          fi
+
+  test-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+      - name: Run Go Tests
+        run: go test ./... -coverprofile=coverage.out
+      - name: Check Coverage
+        run: |
+          coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          if (( $(echo "$coverage < 100" | bc -l) )); then
+            echo "❌ Coverage is $coverage%, must be 100%"
+            exit 1
+          fi
+
+  test-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+      - name: Install Dependencies
+        run: npm install
+      - name: Run JS Tests
+        run: npm test
+      - name: Check Coverage
+        run: |
+          coverage=$(node -e "console.log(Math.round(require('./coverage/coverage-summary.json').total.lines.pct))")
+          if (( $(echo "$coverage < 100" | bc -l) )); then
+            echo "❌ Coverage is $coverage%, must be 100%"
+            exit 1
+          fi
