@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import isStrongPassword from "./password-checker";
-
+import isStrongPassword from "./password-checker.js";
 
 test("should return true for valid strong passwords", () => {
   assert.strictEqual(
