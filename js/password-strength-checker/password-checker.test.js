@@ -6,7 +6,7 @@ test("should return true for valid strong passwords", () => {
   assert.strictEqual(
     isStrongPassword("Password1"),
     true,
-    '"Password1" is valid'
+    '"Password1" is valid '
   );
   assert.strictEqual(
     isStrongPassword("StrongPass9"),
