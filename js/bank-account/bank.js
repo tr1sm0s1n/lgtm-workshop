@@ -1,6 +1,6 @@
 // account.js
 
-function createAccount(initialBalance = 0) {
+export function createAccount(initialBalance = 0) {
   if (initialBalance < 0) {
     throw new Error("Initial balance cannot be negative");
   }
