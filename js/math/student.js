@@ -53,14 +53,14 @@ const failedStudent = new Student({
     "History": 80,
 });
 
-console.log("--- Passed Student Data ---");
-console.log("Marks:", passedStudent.Marks);
-console.log("Total Marks:", passedStudent.Total());      // Output: 255
-console.log("Passed All Subjects:", passedStudent.Passed()); // Output: true
+// console.log("--- Passed Student Data ---");
+// console.log("Marks:", passedStudent.Marks);
+// console.log("Total Marks:", passedStudent.Total());      // Output: 255
+// console.log("Passed All Subjects:", passedStudent.Passed()); // Output: true
 
-console.log("\n--- Failed Student Data ---");
-console.log("Marks:", failedStudent.Marks);
-console.log("Total Marks:", failedStudent.Total());      // Output: 175
-console.log("Passed All Subjects:", failedStudent.Passed()); // Output: false
+// console.log("\n--- Failed Student Data ---");
+// console.log("Marks:", failedStudent.Marks);
+// console.log("Total Marks:", failedStudent.Total());      // Output: 175
+// console.log("Passed All Subjects:", failedStudent.Passed()); // Output: false
 
-// To run this code, save it as 'student.js' and execute: node student.js
+// // To run this code, save it as 'student.js' and execute: node student.js
